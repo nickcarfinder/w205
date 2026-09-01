@@ -14,6 +14,41 @@
     'E-Volt':      { tiers: [30, 27, 24], deposit: 150 }
   };
 
+  /* ---- Copy per language; <html lang> picks one ---- */
+  var I18N = {
+    en: {
+      locale: 'en-GB', openMenu: 'Open menu', closeMenu: 'Close menu',
+      days: function (n) { return n + (n === 1 ? ' day' : ' days'); },
+      pickDates: 'Pick your dates to see a price',
+      returnAfter: 'Return date must be after pick-up',
+      returnInvalid: 'The return date must be on or after the pick-up date.',
+      estimate: function (q, d) { return d + ' × €' + q.rate + ' · plus €' + q.deposit + ' refundable deposit'; },
+      greeting: function (model) { return 'Hola Moto Naranja! I would like to book a ' + model + '.'; },
+      dates: function (a, b, q, d) { return 'Dates: ' + a + ' to ' + b + (q ? ' (' + d + ', approx. €' + q.total + ')' : ''); },
+      name: 'Name: ', phone: 'Phone: ', notes: 'Notes: ',
+      subject: function (model) { return 'Moped booking: ' + model; },
+      blocked: 'Your browser blocked the WhatsApp window. Use the email link instead, or write to us directly.'
+    },
+    uk: {
+      locale: 'uk-UA', openMenu: 'Відкрити меню', closeMenu: 'Закрити меню',
+      days: function (n) {
+        var m10 = n % 10, m100 = n % 100;
+        var word = (m10 === 1 && m100 !== 11) ? 'день' : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) ? 'дні' : 'днів';
+        return n + ' ' + word;
+      },
+      pickDates: 'Обери дати, щоб побачити ціну',
+      returnAfter: 'Дата повернення має бути після дати отримання',
+      returnInvalid: 'Дата повернення має бути не раніше дати отримання.',
+      estimate: function (q, d) { return d + ' × €' + q.rate + ' · депозит €' + q.deposit + ', повертається'; },
+      greeting: function (model) { return 'Вітаю, Moto Naranja! Хочу забронювати ' + model + '.'; },
+      dates: function (a, b, q, d) { return 'Дати: ' + a + ' – ' + b + (q ? ' (' + d + ', орієнтовно €' + q.total + ')' : ''); },
+      name: 'Ім’я: ', phone: 'Телефон: ', notes: 'Коментар: ',
+      subject: function (model) { return 'Бронювання мопеда: ' + model; },
+      blocked: 'Браузер заблокував вікно WhatsApp. Скористайся посиланням для email або напиши нам напряму.'
+    }
+  };
+  var T = I18N[(document.documentElement.lang || 'en').slice(0, 2).toLowerCase()] || I18N.en;
+
   /* ---- Nav ---- */
   var nav = document.querySelector('.nav');
   var toggle = document.querySelector('.nav__toggle');
@@ -22,7 +57,7 @@
   function setMenu(open) {
     document.body.classList.toggle('menu-open', open);
     toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    toggle.setAttribute('aria-label', open ? T.closeMenu : T.openMenu);
   }
 
   if (toggle && menu) {
@@ -109,7 +144,7 @@
   }
 
   function formatDate(date) {
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return date.toLocaleDateString(T.locale, { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   function rentalDays() {
@@ -132,16 +167,16 @@
   function updateEstimate() {
     var days = rentalDays();
     if (days === -1) {
-      dropoff.setCustomValidity('The return date must be on or after the pick-up date.');
+      dropoff.setCustomValidity(T.returnInvalid);
     } else {
       dropoff.setCustomValidity('');
     }
     var q = quote();
     if (!q) {
-      estDetail.textContent = days === -1 ? 'Return date must be after pick-up' : 'Pick your dates to see a price';
+      estDetail.textContent = days === -1 ? T.returnAfter : T.pickDates;
       estTotal.textContent = '€ —';
     } else {
-      estDetail.textContent = q.days + (q.days === 1 ? ' day' : ' days') + ' × €' + q.rate + ' · plus €' + q.deposit + ' refundable deposit';
+      estDetail.textContent = T.estimate(q, T.days(q.days));
       estTotal.textContent = '€' + q.total;
     }
     updateMailLink();
@@ -151,19 +186,19 @@
     var q = quote();
     var a = parseDate(pickup.value);
     var b = parseDate(dropoff.value);
-    var lines = ['Hola Moto Naranja! I would like to book a ' + modelSelect.value + '.'];
+    var lines = [T.greeting(modelSelect.value)];
     if (a && b) {
-      lines.push('Dates: ' + formatDate(a) + ' to ' + formatDate(b) + (q ? ' (' + q.days + (q.days === 1 ? ' day' : ' days') + ', approx. €' + q.total + ')' : ''));
+      lines.push(T.dates(formatDate(a), formatDate(b), q, q ? T.days(q.days) : ''));
     }
-    if (nameInput.value.trim()) lines.push('Name: ' + nameInput.value.trim());
-    if (phoneInput.value.trim()) lines.push('Phone: ' + phoneInput.value.trim());
-    if (notes.value.trim()) lines.push('Notes: ' + notes.value.trim());
+    if (nameInput.value.trim()) lines.push(T.name + nameInput.value.trim());
+    if (phoneInput.value.trim()) lines.push(T.phone + phoneInput.value.trim());
+    if (notes.value.trim()) lines.push(T.notes + notes.value.trim());
     return lines.join('\n');
   }
 
   function updateMailLink() {
     if (!mailLink) return;
-    mailLink.href = 'mailto:' + EMAIL + '?subject=' + encodeURIComponent('Moped booking: ' + modelSelect.value) + '&body=' + encodeURIComponent(buildMessage());
+    mailLink.href = 'mailto:' + EMAIL + '?subject=' + encodeURIComponent(T.subject(modelSelect.value)) + '&body=' + encodeURIComponent(buildMessage());
   }
 
   pickup.min = isoToday();
@@ -188,7 +223,7 @@
     var url = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(buildMessage());
     var win = window.open(url, '_blank', 'noopener');
     if (!win) {
-      errorBox.textContent = 'Your browser blocked the WhatsApp window. Use the email link instead, or write to us directly.';
+      errorBox.textContent = T.blocked;
       errorBox.hidden = false;
     }
   });

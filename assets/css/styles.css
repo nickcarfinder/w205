@@ -28,6 +28,14 @@
   --ease: cubic-bezier(.2, .8, .2, 1);
 }
 
+/* Ukrainian pages: the Latin faces carry no Cyrillic, so Cyrillic glyphs fall through
+   to matching families (Fraunces → Vollkorn, Figtree → Onest, DM Mono → IBM Plex Mono) */
+:root:lang(uk) {
+  --font-display: "Fraunces", "Vollkorn", "Iowan Old Style", Georgia, serif;
+  --font-body: "Figtree", "Onest", "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: "DM Mono", "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -182,6 +190,19 @@ p { margin: 0 0 1rem; }
 .nav__toggle span + span { transform: translate(-50%, -50%) translateY(4px); }
 .menu-open .nav__toggle span { transform: translate(-50%, -50%) rotate(45deg); }
 .menu-open .nav__toggle span + span { transform: translate(-50%, -50%) rotate(-45deg); }
+
+/* Language switch */
+.lang { display: inline-flex; overflow: hidden; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper-2); }
+.lang a {
+  padding: .5rem .7rem;
+  font: 500 .68rem/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.lang a + a { border-left: 2px solid var(--ink); }
+.lang a[aria-current="page"] { background: var(--ink); color: var(--paper); }
+.lang a:not([aria-current]):hover { background: var(--naranja); }
+.footer__lang a[aria-current="page"] { color: var(--paper); }
 
 /* ---------- Hero ---------- */
 .hero { position: relative; overflow: hidden; padding-block: clamp(2rem, 5vw, 4rem) clamp(3rem, 7vw, 5.5rem); }
